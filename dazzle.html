@@ -17,36 +17,7 @@
 	</head>
 
 	<body></body>
-	<!--
-	<body>
-	<article>
 
-	<br>
-	<header>
-		<h3>Peter Whidden</h3>
-	</header>
-	<p>
-	<br>
-	Seattle WA
-	<br>
-	<br>
-	Here is some of my work:
-	<br>
-	<a href="http://peterwhidden.webflow.io">demo showcase</a>
-	<br>
-	<a href="http://uwc.graphics">uw computer graphics</a>
-	<br>
-	<a href="https://github.com/PWhiddy">gtihub</a>
-	<br>
-	<a href="http://shadertoy.com/user/tehsauce">shadertoy</a>
-	<br>
-	<a href="http://transdimensional.xyz/resume.pdf">resume</a>
-	</p>
-	</article>
-		 
-
-	</body>
-	-->
 	<script src="https://threejs.org/build/three.min.js"></script>
 	
 	<script>
@@ -144,10 +115,14 @@
 			geometry.addAttribute( 'normal', normalAttribute );
 			geometry.addAttribute( 'color', colorAttribute );
 			geometry.computeBoundingSphere();
+			/*
 			var material = new THREE.MeshPhongMaterial( {
 				color: 0xaaaaaa, specular: 0xffffff, shininess: 250,
 				side: THREE.DoubleSide, vertexColors: THREE.VertexColors
 			} );
+			*/
+
+
 			mesh = new THREE.Mesh( geometry, material );
 			scene.add( mesh );
 
