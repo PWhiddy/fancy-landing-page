@@ -25,14 +25,24 @@
 			precision mediump int;
 			uniform mat4 modelViewMatrix; // optional
 			uniform mat4 projectionMatrix; // optional
+			uniform float time;
+			uniform float xradius;
+			uniform float yradius;
 			attribute vec3 position;
+			attribute vec3 normal;
 			attribute vec4 color;
+			attribute float theta;
 			varying vec3 vPosition;
+			varying vec3 vNormal;
 			varying vec4 vColor;
 			void main()	{
 				vPosition = position;
 				vColor = color;
-				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+				vNormal = normal;
+				vec3 p = position;
+				p.y += (0.4*pow(sin(theta-time),4.0)+1.0)*yradius*sin(theta);
+				p.x += (0.4*pow(sin(theta-time),4.0)+1.0)*xradius*cos(theta);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( p, 1.0 );
 			}
 		</script>
 
@@ -41,10 +51,15 @@
 			precision mediump int;
 			uniform float time;
 			varying vec3 vPosition;
+			varying vec3 vNormal;
 			varying vec4 vColor;
 			void main()	{
+
+				vec3 lightDir = normalize(vec3(0.1,1.0,0.2));
+				float bright = abs( dot(lightDir,vNormal));
 				vec4 color = vec4( vColor );
-				color.r += sin( vPosition.x * 10.0 + time ) * 0.5;
+				color.rgb *= bright;
+				//color.r += sin( vPosition.x * 1.0 + time ) * 0.5;
 				gl_FragColor = color;
 			}
 		</script>
@@ -64,6 +79,7 @@
 			camera.position.z = 100;
 
 			scene = new THREE.Scene();
+			//scene.fog = new THREE.Fog(0xffffff, 50, 150);
 
 			geometry = new THREE.BoxGeometry( 10, 10, 10 );
 			material = new THREE.MeshNormalMaterial();
@@ -87,16 +103,20 @@
 			var positions = [];
 			var normals = [];
 			var colors = [];
+			var angles = [];
 			var color = new THREE.Color();
-			var n = 100, n2 = n / 2;	// triangles spread in the cube
-			var d = 6, d2 = d / 2;	// individual triangle size
+			var n = 20, n2 = n / 2;	// triangles spread in the cube
+			var d = 2, d2 = d / 2;	// individual triangle size
 			var pA = new THREE.Vector3();
 			var pB = new THREE.Vector3();
 			var pC = new THREE.Vector3();
 			var cb = new THREE.Vector3();
 			var ab = new THREE.Vector3();
 			for ( var i = 0; i < triangles; i ++ ) {
-				// positions
+				// position
+				// random angle
+				var theta = Math.random()*2.0*3.141592653;
+				angles.push( theta, theta, theta );
 				var x = Math.random() * n - n2;
 				var y = Math.random() * n - n2;
 				var z = Math.random() * n - n2;
@@ -138,11 +158,13 @@
 			var positionAttribute = new THREE.Float32BufferAttribute( positions, 3 );
 			var normalAttribute = new THREE.Int16BufferAttribute( normals, 3 );
 			var colorAttribute = new THREE.Uint8BufferAttribute( colors, 3 );
+			var angleAttribute = new THREE.Float32BufferAttribute( angles, 1 );
 			normalAttribute.normalized = true; // this will map the buffer values to 0.0f - +1.0f in the shader
 			colorAttribute.normalized = true;
 			geometry.addAttribute( 'position', positionAttribute );
 			geometry.addAttribute( 'normal', normalAttribute );
 			geometry.addAttribute( 'color', colorAttribute );
+			geometry.addAttribute( 'theta', angleAttribute );
 			geometry.computeBoundingSphere();
 			/*
 			var material = new THREE.MeshPhongMaterial( {
@@ -152,7 +174,9 @@
 			*/
 			var material = new THREE.RawShaderMaterial( {
 				uniforms: {
-					time: { value: 1.0 }
+					time: { value: 1.0 },
+					xradius: { value: 30.0 },
+					yradius: { value: 30.0 }
 				},
 				vertexShader: document.getElementById( 'vertexShader' ).textContent,
 				fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
@@ -174,7 +198,7 @@
 			info.style.left = '20px';
 			info.style.width = '100%';
 			info.style.textAlign = 'left';
-			info.innerHTML = '<article><br><header><h3>Peter Whidden</h3></header><p><br>Seattle WA<br><br>Here is some of my work:<br><a href="http://peterwhidden.webflow.io">demo showcase</a><br><a href="http://uwc.graphics">uw computer graphics</a><br><a href="https://github.com/PWhiddy">gtihub</a><br><a href="http://shadertoy.com/user/tehsauce">shadertoy</a><br><a href="http://transdimensional.xyz/resume.pdf">resume</a></p></article>';
+			info.innerHTML = '<article><br><header><h3>Peter Whidden</h3></header><p><br>Seattle WA<br><br>Here is some of my work:<br><a href="http://peterwhidden.webflow.io">demo showcase</a><br><a href="http://uwc.graphics">uw computer graphics</a><br><a href="https://github.com/PWhiddy">github</a><br><a href="http://shadertoy.com/user/tehsauce">shadertoy</a><br><a href="http://transdimensional.xyz/resume.pdf">resume</a></p></article>';
 			
 			container.appendChild( info );
 
@@ -196,8 +220,11 @@
 
 			requestAnimationFrame( animate );
 
-			mesh.rotation.x += 0.002;
-			mesh.rotation.y += 0.001;
+			let t = performance.now();
+			mesh.material.uniforms.time.value = t * 0.001;
+			
+			mesh.rotation.x += 0.0018;
+			mesh.rotation.y += 0.0008;
 
 			renderer.render( scene, camera );
 
