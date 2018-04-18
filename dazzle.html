@@ -32,17 +32,47 @@
 			attribute vec3 normal;
 			attribute vec4 color;
 			attribute float theta;
+			attribute float phi;
+			attribute float radius;
+			attribute float cork;
 			varying vec3 vPosition;
 			varying vec3 vNormal;
 			varying vec4 vColor;
-			void main()	{
-				vPosition = position;
+			varying float vTheta;
+			varying float vPhi;
+			varying float vRadius;
+			varying float vRadMul;
+
+			vec2 rot2D(vec2 p, float angle) 
+			{
+    				float s = sin(angle);
+    				float c = cos(angle);
+    				return p * mat2(c,s,-s,c);
+			}
+
+			void main() {
 				vColor = color;
 				vNormal = normal;
-				vec3 p = position;
-				p.y += (0.4*pow(sin(theta-time),4.0)+1.0)*yradius*sin(theta);
-				p.x += (0.4*pow(sin(theta-time),4.0)+1.0)*xradius*cos(theta);
-				gl_Position = projectionMatrix * modelViewMatrix * vec4( p, 1.0 );
+				float wraps = 10.0;
+				vTheta = theta;
+				vRadius = radius;
+				float rscale = 0.5*(pow(0.5*sin(0.60*wraps*theta+0.2*(time+2.0))+0.5,14.0)+0.55);
+				vRadMul = rscale;
+				vPhi = phi;
+				vec3 circleP = vec3( 0.0, rscale * radius, 0.0);
+				circleP.yz = rot2D( circleP.yz, phi );
+				circleP.z += 0.5*(0.5*sin(0.2*theta+0.25*(time+2.0))+0.5)*xradius;
+				circleP.xz = rot2D( circleP.xz, wraps*theta + 0.8*time );
+				circleP.y = mod(circleP.y+(theta)*80.0+6.0*(time-21.0), 500.0)-200.0;
+				circleP += position;
+				vec4 p = vec4( circleP, 1.0 );
+				float d = theta-time;
+				//p.y += (1.4*pow(cos(1.0*d),4.0)+1.0)*yradius*sin(theta);
+				//p.x += (1.4*pow(cos(1.0*d),4.0)+1.0)*xradius*cos(theta);
+				vPosition = p.xyz;
+				p = projectionMatrix * modelViewMatrix * p;
+				//p.y = mod(p.y+time*25.0, 460.0)-220.0;
+				gl_Position = p;//projectionMatrix * modelViewMatrix * vec4( p, 1.0 );
 			}
 		</script>
 
@@ -53,12 +83,21 @@
 			varying vec3 vPosition;
 			varying vec3 vNormal;
 			varying vec4 vColor;
-			void main()	{
+			varying float vTheta;
+			varying float vPhi;
+			varying float vRadius;
+			varying float vRadMul;
+
+			void main() {
+
+				const float invtau = 1.0/(3.14159*2.0);
 
 				vec3 lightDir = normalize(vec3(0.1,1.0,0.2));
 				float bright = abs( dot(lightDir,vNormal));
-				vec4 color = vec4( vColor );
-				color.rgb *= bright;
+				float close = 0.08*vRadius;
+				vec4 color = vec4( close, close, close, 1.0 );///vec4( vColor );
+				//color.gb -= vec2(0.5, 1.0);
+				//color.rgb *= bright;//*clamp(1.0-0.05*vPosition.z, 0.0, 1.0);
 				//color.r += sin( vPosition.x * 1.0 + time ) * 0.5;
 				gl_FragColor = color;
 			}
@@ -75,18 +114,32 @@
 
 		function init() {
 
+			container = document.createElement( 'div' );
+			document.body.appendChild( container );
+			info = document.createElement( 'div' );
+			info.style.position = 'absolute';
+			info.style.top = '10px';
+			info.style.left = '20px';
+			info.style.width = '100%';
+			info.style.textAlign = 'left';
+			info.innerHTML = '<article><br><header><h3>Peter Whidden</h3></header><p><br>Seattle WA<br><br>Here is some of my work:<br><a href="http://peterwhidden.webflow.io">demo showcase</a><br><a href="http://uwc.graphics">uw computer graphics</a><br><a href="https://github.com/PWhiddy">github</a><br><a href="http://shadertoy.com/user/tehsauce">shadertoy</a><br><a href="http://transdimensional.xyz/resume.pdf">resume</a></p></article>';
+			
+			container.appendChild( info );
+
+
+
 			camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.5, 300 );
-			camera.position.z = 100;
+			camera.position.z = 20;
 
 			scene = new THREE.Scene();
 			//scene.fog = new THREE.Fog(0xffffff, 50, 150);
-
+			/*	
 			geometry = new THREE.BoxGeometry( 10, 10, 10 );
 			material = new THREE.MeshNormalMaterial();
 
 			mesh = new THREE.Mesh( geometry, material );
 			scene.add( mesh );
-			
+			*/
 			////----
 
 
@@ -101,34 +154,45 @@
 			var triangles = 50000;
 			var geometry = new THREE.BufferGeometry();
 			var positions = [];
+			var centers = [];
 			var normals = [];
 			var colors = [];
 			var angles = [];
+			var phis = [];
+			var rads = [];
+			var corks = [];
 			var color = new THREE.Color();
-			var n = 20, n2 = n / 2;	// triangles spread in the cube
-			var d = 2, d2 = d / 2;	// individual triangle size
+			var n = 15, n2 = n / 2;	// triangles spread in the cube
+			var d = 1, d2 = d / 2;	// individual triangle size
 			var pA = new THREE.Vector3();
 			var pB = new THREE.Vector3();
 			var pC = new THREE.Vector3();
 			var cb = new THREE.Vector3();
 			var ab = new THREE.Vector3();
+			var tau = 2.0*3.141592653;
 			for ( var i = 0; i < triangles; i ++ ) {
 				// position
 				// random angle
-				var theta = Math.random()*2.0*3.141592653;
+				var theta = Math.random()*tau;
+				var phi = Math.random()*tau;
+				var radius = Math.random() * n;
+				var cork = Math.random() * tau;
 				angles.push( theta, theta, theta );
-				var x = Math.random() * n - n2;
-				var y = Math.random() * n - n2;
-				var z = Math.random() * n - n2;
-				var ax = x + Math.random() * d - d2;
-				var ay = y + Math.random() * d - d2;
-				var az = z + Math.random() * d - d2;
-				var bx = x + Math.random() * d - d2;
-				var by = y + Math.random() * d - d2;
-				var bz = z + Math.random() * d - d2;
-				var cx = x + Math.random() * d - d2;
-				var cy = y + Math.random() * d - d2;
-				var cz = z + Math.random() * d - d2;
+				phis.push( phi, phi, phi );
+				rads.push( radius, radius, radius );
+				corks.push( cork, cork, cork );
+				//var x = Math.random() * n - n2;
+				//var y = Math.random() * n - n2;
+				//var z = Math.random() * n - n2;
+				var ax = /*x +*/ Math.random() * d - d2;
+				var ay = /*y +*/ Math.random() * d - d2;
+				var az = /*z +*/ Math.random() * d - d2;
+				var bx = /*x +*/ Math.random() * d - d2;
+				var by = /*y +*/ Math.random() * d - d2;
+				var bz = /*z +*/ Math.random() * d - d2;
+				var cx = /*x +*/ Math.random() * d - d2;
+				var cy = /*y +*/ Math.random() * d - d2;
+				var cz = /*z +*/ Math.random() * d - d2;
 				positions.push( ax, ay, az );
 				positions.push( bx, by, bz );
 				positions.push( cx, cy, cz );
@@ -147,9 +211,9 @@
 				normals.push( nx * 32767, ny * 32767, nz * 32767 );
 				normals.push( nx * 32767, ny * 32767, nz * 32767 );
 				// colors
-				var vx = ( x / n ) + 0.5;
-				var vy = ( y / n ) + 0.5;
-				var vz = ( z / n ) + 0.5;
+				var vx = ( theta / tau );// + 0.5;
+				var vy = ( phi / tau );// + 0.5;
+				var vz = ( radius / n );// + 0.5;
 				color.setRGB( vx, vy, vz );
 				colors.push( color.r * 255, color.g * 255, color.b * 255 );
 				colors.push( color.r * 255, color.g * 255, color.b * 255 );
@@ -159,14 +223,19 @@
 			var normalAttribute = new THREE.Int16BufferAttribute( normals, 3 );
 			var colorAttribute = new THREE.Uint8BufferAttribute( colors, 3 );
 			var angleAttribute = new THREE.Float32BufferAttribute( angles, 1 );
+			var phiAttribute = new THREE.Float32BufferAttribute( phis, 1 );
+			var radiusAttribute = new THREE.Float32BufferAttribute( rads, 1 );
+			var corkAttribute = new THREE.Float32BufferAttribute( corks, 1 );
 			normalAttribute.normalized = true; // this will map the buffer values to 0.0f - +1.0f in the shader
 			colorAttribute.normalized = true;
 			geometry.addAttribute( 'position', positionAttribute );
 			geometry.addAttribute( 'normal', normalAttribute );
 			geometry.addAttribute( 'color', colorAttribute );
 			geometry.addAttribute( 'theta', angleAttribute );
-			geometry.computeBoundingSphere();
-			/*
+			geometry.addAttribute( 'phi', phiAttribute );
+			geometry.addAttribute( 'radius', radiusAttribute );
+			geometry.addAttribute( 'cork', corkAttribute );
+			geometry.computeBoundingSphere();			/*
 			var material = new THREE.MeshPhongMaterial( {
 				color: 0xaaaaaa, specular: 0xffffff, shininess: 250,
 				side: THREE.DoubleSide, vertexColors: THREE.VertexColors
@@ -175,7 +244,7 @@
 			var material = new THREE.RawShaderMaterial( {
 				uniforms: {
 					time: { value: 1.0 },
-					xradius: { value: 30.0 },
+					xradius: { value: 20.0 },
 					yradius: { value: 30.0 }
 				},
 				vertexShader: document.getElementById( 'vertexShader' ).textContent,
@@ -187,20 +256,11 @@
 			mesh = new THREE.Mesh( geometry, material );
 			scene.add( mesh );
 
+			mesh.rotation.z += -1.0;
+			//mesh.rotation.y += 0.00023;
+
 			renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true } );
 			renderer.setSize( window.innerWidth, window.innerHeight );
-
-			container = document.createElement( 'div' );
-			document.body.appendChild( container );
-			info = document.createElement( 'div' );
-			info.style.position = 'absolute';
-			info.style.top = '10px';
-			info.style.left = '20px';
-			info.style.width = '100%';
-			info.style.textAlign = 'left';
-			info.innerHTML = '<article><br><header><h3>Peter Whidden</h3></header><p><br>Seattle WA<br><br>Here is some of my work:<br><a href="http://peterwhidden.webflow.io">demo showcase</a><br><a href="http://uwc.graphics">uw computer graphics</a><br><a href="https://github.com/PWhiddy">github</a><br><a href="http://shadertoy.com/user/tehsauce">shadertoy</a><br><a href="http://transdimensional.xyz/resume.pdf">resume</a></p></article>';
-			
-			container.appendChild( info );
 
 			container.appendChild( renderer.domElement );
 			
@@ -220,11 +280,11 @@
 
 			requestAnimationFrame( animate );
 
-			let t = performance.now();
+			let t = performance.now();//+100000.0;
 			mesh.material.uniforms.time.value = t * 0.001;
 			
-			mesh.rotation.x += 0.0018;
-			mesh.rotation.y += 0.0008;
+			//mesh.rotation.x += 0.0004;
+			//mesh.rotation.y += 0.00023;
 
 			renderer.render( scene, camera );
 
