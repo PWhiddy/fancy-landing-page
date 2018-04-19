@@ -41,7 +41,7 @@
 		void main()	{
 			vPosition = position;
 			vColor = colors;
-	        vec3 p = position;
+	        	vec3 p = position;
 			gl_Position = 
 				projectionMatrix * modelViewMatrix * vec4( p, 1.0 );
 			//float d = distance(p, cameraPos);
@@ -57,6 +57,9 @@
 			varying vec4 vColor;
 			void main()	{
 				vec4 col = vColor;
+				float mag = clamp(1.0-0.02*length(vPosition), 0.0, 1.0);
+				float phase = 0.0;//sin(length(vPosition)*0.1);
+				col.rgb = mag*vec3(cos(0.83*time+phase)*0.4+0.5,0.0,0.2*sin(time-phase)+0.5);
 				//col.g = 0.0;
 				gl_FragColor = vec4( col );
 				
@@ -93,7 +96,8 @@
 				//container = document.getElementById( 'container' );
 				camera = new THREE.PerspectiveCamera( 50, 
 					window.innerWidth / window.innerHeight, 0.5, 1800 );
-				camera.position.set(20, -100, 30);
+				camera.position.set(0, 0, -200);
+				//camera.rotation.z += 1.5;
 				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 				mouse = new THREE.Vector2();
 				renderer = new THREE.WebGLRenderer({ 
@@ -120,9 +124,9 @@
 		        // Create cube of particles
 		        verts = new Float32Array(paddedSize);
 		        for (var i=0; i<vertCount; i++) {
-		        	verts[3*i+0] = spacing*dim*Math.random();//(i%dim-dim/2);
-		        	verts[3*i+1] = spacing*dim*Math.random();//Math.floor(i/dim)%dim-dim/2;
-		        	verts[3*i+2] = spacing*dim*Math.random();//Math.floor(i/(dim*dim))-dim/2;
+		        	verts[3*i+0] = spacing*dim*(Math.random()-0.5);//(i%dim-dim/2);
+		        	verts[3*i+1] = spacing*dim*(Math.random()-0.5);//Math.floor(i/dim)%dim-dim/2;
+		        	verts[3*i+2] = spacing*dim*(Math.random()-0.5);//Math.floor(i/(dim*dim))-dim/2;
 		        }
 		        vels = new Float32Array(paddedSize);
 		        for (i of vels) i = 0.0;
@@ -154,6 +158,7 @@
 					depthTest: false
 				} );
 				points = new THREE.Mesh( geometry, material );
+
 				scene = new THREE.Scene();
 				scene.add(points);
 				plane = new THREE.Mesh( 
@@ -172,9 +177,9 @@
 			}
 			function initGui() {
 				params = {
-					Energy: 6.9,
-					Momentum: 0.61,
-					Loopiness: 50.0,
+					Energy: 10.3,//6.9,
+					Momentum: 0.4,//0.61,
+					Loopiness: 73,//50.0,
 					pointSize: 140.0,
 					Fade: 0.23,
 				};
