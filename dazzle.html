@@ -63,7 +63,7 @@
 
 		
 		<script>
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+			//if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 			var container, stats;
 			var camera, scene, renderer, controls;
 			var pointLight, skyBox, plane;
@@ -107,9 +107,9 @@
 		        // Create cube of particles
 		        verts = new Float32Array(paddedSize);
 		        for (var i=0; i<vertCount; i++) {
-		        	verts[3*i+0] = spacing*(i%dim-dim/2);
-		        	verts[3*i+1] = spacing*Math.floor(i/dim)%dim-dim/2;
-		        	verts[3*i+2] = spacing*Math.floor(i/(dim*dim))-dim/2;
+		        	verts[3*i+0] = spacing*dim*Math.random();//(i%dim-dim/2);
+		        	verts[3*i+1] = spacing*dim*Math.random();//Math.floor(i/dim)%dim-dim/2;
+		        	verts[3*i+2] = spacing*dim*Math.random();//Math.floor(i/(dim*dim))-dim/2;
 		        }
 		        vels = new Float32Array(paddedSize);
 		        for (i of vels) i = 0.0;
@@ -153,8 +153,8 @@
 				camera.add(plane);
 				scene.add(camera);
         
-				stats = new Stats();
-				container.appendChild( stats.dom );
+				//stats = new Stats();
+				//container.appendChild( stats.dom );
 				window.addEventListener( 'resize', onWindowResize, false );
 			}
 			function initGui() {
