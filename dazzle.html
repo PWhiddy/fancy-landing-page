@@ -57,9 +57,9 @@
 			varying vec4 vColor;
 			void main()	{
 				vec4 col = vColor;
-				float mag = clamp(1.0-0.02*length(vPosition), 0.0, 1.0);
-				float phase = 0.0;//sin(length(vPosition)*0.1);
-				col.rgb = mag*vec3(cos(0.83*time+phase)*0.4+0.5,0.0,0.2*sin(time-phase)+0.5);
+				float mag = clamp(1.0-(0.2*sin(time*0.06)+1.0)*0.015*length(vPosition), 0.0, 1.0);
+				float phase = 0.0;//sin(length(vPosition)*0.5);
+				col.rgb = mag*vec3(sin(0.052*time+phase)*0.4+0.6,0.0,0.13*cos(0.072*time-phase)+0.5);
 				//col.g = 0.0;
 				gl_FragColor = vec4( col );
 				
@@ -78,7 +78,7 @@
 			//var monkeys = WebMonkeys();
 			init();
 			//console.log(scene.children[0]);
-			gui.closed = true;
+			//gui.closed = true;
 			animate();		
 			function init() {
 				container = document.createElement( 'div' );
@@ -183,12 +183,12 @@
 					pointSize: 140.0,
 					Fade: 0.23,
 				};
-				gui = new dat.GUI();
+				/*gui = new dat.GUI();
 				gui.add(params, "Energy", 0.0, 10.5);
 				gui.add(params, "Momentum", 0.0, 0.995);
 				gui.add(params, "Loopiness", 1.0, 80.0);
 				//gui.add(params, "pointSize", 50, 250);
-				gui.add(params, "Fade", 0.0, 0.4)
+				gui.add(params, "Fade", 0.0, 0.4)*/
 			}
 			function onDocumentMouseMove(event) {
 				mouse.x = ( event.clientX / window.innerWidth );
