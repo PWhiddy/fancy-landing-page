@@ -16,36 +16,7 @@
 	</style>
 	</head>
 
-	<div id="container">	
-
-	<body>
-	<article>
-	<br>
-	<header>
-		<h3>Peter Whidden</h3>
-	</header>
-	<p>
-	<br>
-	Seattle WA
-	<br>
-	<br>
-	Here is some of my work:
-	<br>
-	<a href="http://peterwhidden.webflow.io">demo showcase</a>
-	<br>
-	<a href="http://uwc.graphics">uw computer graphics</a>
-	<br>
-	<a href="https://github.com/PWhiddy">gtihub</a>
-	<br>
-	<a href="http://shadertoy.com/user/tehsauce">shadertoy</a>
-	<br>
-	<a href="http://transdimensional.xyz/resume.pdf">resume</a>
-	</p>
-	</article>
-		 
-	</body>
-		
-	</div>
+	<body></body>
 	
 	<script src="https://threejs.org/build/three.min.js"></script>
 	
@@ -107,7 +78,19 @@
 			gui.closed = true;
 			animate();		
 			function init() {
-				container = document.getElementById( 'container' );
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+				info = document.createElement( 'div' );
+				info.style.position = 'absolute';
+				info.style.top = '10px';
+				info.style.left = '20px';
+				info.style.width = '100%';
+				info.style.textAlign = 'left';
+				info.innerHTML = '<article><br><header><h3>Peter Whidden</h3></header><p><br>Seattle WA<br><br>Here is some of my work:<br><a href="http://peterwhidden.webflow.io">demo showcase</a><br><a href="http://uwc.graphics">uw computer graphics</a><br><a href="https://github.com/PWhiddy">github</a><br><a href="http://shadertoy.com/user/tehsauce">shadertoy</a><br><a href="http://transdimensional.xyz/resume.pdf">resume</a></p></article>';
+
+				container.appendChild( info );
+				
+				//container = document.getElementById( 'container' );
 				camera = new THREE.PerspectiveCamera( 50, 
 					window.innerWidth / window.innerHeight, 0.5, 1800 );
 				camera.position.set(20, -100, 30);
